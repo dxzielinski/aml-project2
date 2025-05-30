@@ -67,7 +67,7 @@ def get_data(file_name):
 X, X_prediction, y = get_data('x_train.txt'), get_data('x_test.txt'), get_data('y_train.txt')
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, shuffle=True)
-y_train, y_test = y_train.ravel(), y_test.ravel()
+y_train, y_test, y = y_train.ravel(), y_test.ravel(), y.ravel()
 
 if __name__ == '__main__':
     print(f'Training data shape: {X_train.shape}.')
