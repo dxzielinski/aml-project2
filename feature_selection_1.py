@@ -1,5 +1,5 @@
 from data_loader import X_train, X_test, y_train, y_test
-from data_loader import X, X_prediction, y
+from data_loader import X_prediction
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
@@ -61,27 +61,30 @@ def train_and_evaluate(t_values):
 
     results = []
 
-    for t in range(1, t_values+1):
-        for penalty in ['l1', 'l2']:
+    for t in range(1, t_values + 1):
+        for penalty in ["l1", "l2"]:
             for C in [0.001, 0.01, 0.1, 1, 10, 100, 1000]:
-
                 indices = mdi(X_train, y_train, t)
 
-                lr = LogisticRegression(penalty=penalty, C=C, solver='liblinear', random_state=rs)
+                lr = LogisticRegression(
+                    penalty=penalty, C=C, solver="liblinear", random_state=rs
+                )
                 lr.fit(X_train[:, indices], y_train)
                 y_pred = lr.predict(X_test[:, indices])
 
                 acc = accuracy_score(y_test, y_pred)
                 score = final_score(acc, t)
 
-                results.append({
-                    't': t,
-                    'penalty': penalty,
-                    'C': C,
-                    'accuracy': acc,
-                    'score': score,
-                    'selected_features': indices.tolist()
-                })
+                results.append(
+                    {
+                        "t": t,
+                        "penalty": penalty,
+                        "C": C,
+                        "accuracy": acc,
+                        "score": score,
+                        "selected_features": indices.tolist(),
+                    }
+                )
     return results
 
 
@@ -102,29 +105,32 @@ def save_results(best_entry):
         - vars1.txt: Selected feature indices
         - obs1.txt: Top 1000 predicted households
     """
-    vars = mdi(X, y, best_entry['t'])
+    vars = mdi(X_train, y_train, best_entry["t"])
 
-    lr = LogisticRegression(penalty=best_entry['penalty'], C=best_entry['C'], solver='liblinear', random_state=rs)
-    lr.fit(X[:, vars], y)
+    lr = LogisticRegression(
+        penalty=best_entry["penalty"],
+        C=best_entry["C"],
+        solver="liblinear",
+        random_state=rs,
+    )
+    lr.fit(X_train[:, vars], y_train)
     y_pred_proba = lr.predict_proba(X_prediction[:, vars])[:, 1]
     top_1000_indices = np.argsort(y_pred_proba)[::-1][:1000]
 
-    with open('vars1.txt', 'w') as file:
+    with open("vars1.txt", "w") as file:
         for num in vars:
             file.write(f"{num}\n")
 
-    with open('obs1.txt', 'w') as file:
+    with open("obs1.txt", "w") as file:
         for num in top_1000_indices:
             file.write(f"{num}\n")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     """Main execution block. For final, long training an optimal value is t_values=20"""
     results = train_and_evaluate(t_values=2)
-
     df = pd.DataFrame.from_dict(results)
-    df.to_csv('results1.csv', index=False)
-
-    best_entry = max(results, key=lambda x: x['score'])
+    df.to_csv("results1.csv", index=False)
+    best_entry = max(results, key=lambda x: x["score"])
     print("Best Model:", best_entry)
     save_results(best_entry)
