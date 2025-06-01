@@ -5,6 +5,7 @@ from sklearn.model_selection import GridSearchCV
 from xgboost import XGBClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.feature_selection import SelectKBest, f_classif, RFE
+from sklearn.metrics import make_scorer, recall_score
 
 
 from data_loader import X_train, X_test, y_train, y_test
@@ -149,7 +150,7 @@ def business_scorer(estimator, X_val, y_val):
 if __name__ == "__main__":
     pipe = Pipeline(
         [
-            ("selector", SelectTopKRFE(k=5)),
+            ("selector", SelectTopK(k=5)),
             (
                 "xgb",
                 XGBClassifier(eval_metric="logloss", random_state=rs),
@@ -161,10 +162,14 @@ if __name__ == "__main__":
         "xgb__max_depth": [1, 2, 3],
         "xgb__n_estimators": [1, 2, 3, 4, 5, 10, 20, 50, 100],
     }
+    recall_scorer = make_scorer(
+        recall_score, greater_is_better=True, pos_label=1, binary=True
+    )
+
     grid_search = GridSearchCV(
         estimator=pipe,
         param_grid=param_grid,
-        scoring=business_scorer,
+        scoring=recall_scorer,
         cv=3,
         n_jobs=-1,
         verbose=0,
@@ -179,7 +184,8 @@ if __name__ == "__main__":
     selected_idx_test = best_pipeline.named_steps["selector"].selected_indices_
     X_test_sel = X_test[:, selected_idx_test]
     proba_test = best_pipeline.named_steps["xgb"].predict_proba(X_test_sel)[:, 1]
-    top_k_test = 1000
+    top_k_test = 0.2 * len(proba_test)
+    top_k_test = max(1, int(np.floor(top_k_test)))
     top_indices_test = np.argsort(proba_test)[::-1][:top_k_test]
     tp_test = np.sum(y_test[top_indices_test] == 1)
     business_test_score = 10 * int(tp_test) - 200 * k_best
