@@ -100,4 +100,5 @@ if __name__ == '__main__':
     plt.xlim(x_min - 0.05 * amplitude, x_max + 0.05 * amplitude)
 
     plt.tight_layout()
+    plt.savefig('class_histogram_comparison_ft2.png')
     plt.show()
