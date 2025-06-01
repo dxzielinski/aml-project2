@@ -5,6 +5,9 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('TkAgg')
 
 rs = 42
 
@@ -102,8 +105,8 @@ def save_results(best_entry):
             - 'selected_features': Feature indices
 
         Creates:
-        - vars1.txt: Selected feature indices
-        - obs1.txt: Top 1000 predicted households
+        - vars_lr.txt: Selected feature indices
+        - obs_lr.txt: Top 1000 predicted households
     """
     vars = mdi(X_train, y_train, best_entry["t"])
 
@@ -117,20 +120,20 @@ def save_results(best_entry):
     y_pred_proba = lr.predict_proba(X_prediction[:, vars])[:, 1]
     top_1000_indices = np.argsort(y_pred_proba)[::-1][:1000]
 
-    with open("vars1.txt", "w") as file:
+    with open("vars_lr.txt", "w") as file:
         for num in vars:
             file.write(f"{num}\n")
 
-    with open("obs1.txt", "w") as file:
+    with open("obs_lr.txt", "w") as file:
         for num in top_1000_indices:
             file.write(f"{num}\n")
 
 
 if __name__ == "__main__":
     """Main execution block. For final, long training an optimal value is t_values=20"""
-    results = train_and_evaluate(t_values=2)
+    results = train_and_evaluate(t_values=20)
     df = pd.DataFrame.from_dict(results)
-    df.to_csv("results1.csv", index=False)
+    df.to_csv("results_lr.csv", index=False)
     best_entry = max(results, key=lambda x: x["score"])
     print("Best Model:", best_entry)
     save_results(best_entry)
