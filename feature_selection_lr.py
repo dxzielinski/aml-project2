@@ -1,13 +1,11 @@
 from data_loader import X_train, X_test, y_train, y_test
 from data_loader import X_prediction
+from data_loader import percent_correct_among_top20percent
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-import matplotlib
-matplotlib.use('TkAgg')
 
 rs = 42
 
@@ -70,13 +68,13 @@ def train_and_evaluate(t_values):
                 indices = mdi(X_train, y_train, t)
 
                 lr = LogisticRegression(
-                    penalty=penalty, C=C, solver="liblinear", random_state=rs
+                    penalty=penalty, C=C, solver="liblinear", random_state=rs, max_iter=1000
                 )
                 lr.fit(X_train[:, indices], y_train)
                 y_pred = lr.predict(X_test[:, indices])
-
+                correct_percent = percent_correct_among_top20percent(lr, X_test[:, indices], y_test)
                 acc = accuracy_score(y_test, y_pred)
-                score = final_score(acc, t)
+                score = final_score(correct_percent, t)
 
                 results.append(
                     {
@@ -84,7 +82,7 @@ def train_and_evaluate(t_values):
                         "penalty": penalty,
                         "C": C,
                         "accuracy": acc,
-                        "score": score,
+                        "score_among_top_20_percent": score,
                         "selected_features": indices.tolist(),
                     }
                 )
@@ -101,7 +99,7 @@ def save_results(best_entry):
             - 'penalty': Regularization type
             - 'C': Regularization strength
             - 'accuracy': Accuracy score
-            - 'score': Final score with penalty
+            - 'score_among_top_20_percent': Final score with penalty
             - 'selected_features': Feature indices
 
         Creates:
@@ -115,6 +113,7 @@ def save_results(best_entry):
         C=best_entry["C"],
         solver="liblinear",
         random_state=rs,
+        max_iter=1000
     )
     lr.fit(X_train[:, vars], y_train)
     y_pred_proba = lr.predict_proba(X_prediction[:, vars])[:, 1]
@@ -134,6 +133,6 @@ if __name__ == "__main__":
     results = train_and_evaluate(t_values=20)
     df = pd.DataFrame.from_dict(results)
     df.to_csv("results_lr.csv", index=False)
-    best_entry = max(results, key=lambda x: x["score"])
+    best_entry = max(results, key=lambda x: x["score_among_top_20_percent"])
     print("Best Model:", best_entry)
     save_results(best_entry)

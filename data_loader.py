@@ -64,6 +64,15 @@ def get_data(file_name):
     return data
 
 
+def percent_correct_among_top20percent(estimator, X_val, y_val):
+    proba = estimator.predict_proba(X_val)[:, 1]
+    n_val = len(proba)
+    top_obs = int(np.floor(0.2 * n_val))
+    top_indices = np.argsort(proba)[::-1][:top_obs]
+    tp = np.sum(y_val[top_indices] == 1)
+    return tp / top_obs
+
+
 X, X_prediction, y = get_data('x_train.txt'), get_data('x_test.txt'), get_data('y_train.txt')
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, shuffle=True)
